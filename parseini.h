@@ -22,7 +22,7 @@ typedef enum
     E_MALLOC,
     E_FILE
 } error_t;
-    
+
 typedef struct
 {
     input_t input_mode;
@@ -30,5 +30,9 @@ typedef struct
 } ini_opt_list;
 
 extern error_t read_option (int, char**, ini_opt_list*);
+
+extern void ini_opt_init (ini_opt_list*);
+
+extern void ini_opt_cleanup (ini_opt_list*);
 
 #endif

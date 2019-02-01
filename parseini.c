@@ -8,10 +8,22 @@
 #include <unistd.h>
 
 static const char *noargs_msg = "No options given. Run with '-h' option";
-static const char *basic_msg = "parseini v0.1.0\n"
+
+static const char *basic_msg =
+"parseini v0.1.0\n"
 "canopeerus <visvanathannaditya@gmail.com\n"
 "A command-line simple INI configuration processor";
-static const char *full_msg = "Full msg";
+
+static const char *full_msg =
+"\nUSAGE:\n"
+"\tpi [FLAGS] [OPTIONS] <path/to/file>\n"
+"\nFLAGS:\n"
+"\t-h   prints help information\n"
+"\t-v   prints version information\n"
+"\t-V   checks validity of input INI\n"
+"\t-s   read INI input from stdin (conflicts with '-f <file' option)\n"
+"\nOPTIONS:\n"
+"\t-f <FILE>    path to file to read from";
 
 static void show_help (msg_t m)
 {
@@ -24,6 +36,7 @@ static void show_help (msg_t m)
             (void) fprintf (stdout, "%s\n", basic_msg);
             break;
         case FULL_MSG:
+            (void) fprintf (stdout,"%s\n", basic_msg);
             (void) fprintf (stdout, "%s\n", full_msg);
             break;
     }
@@ -32,21 +45,25 @@ static void show_help (msg_t m)
 
 void ini_opt_init (ini_opt_list* i_opt)
 {
+    i_opt = (ini_opt_list*) malloc (sizeof(ini_opt_list));
     i_opt->input_mode = UNINIT;
     i_opt->filepath = NULL;
 }
+
+void ini_opt_cleanup (ini_opt_list* i_opt)
+{
+    free (i_opt);
+}
+
 error_t read_option (int argc, char *argv[], ini_opt_list* ini_opt)
 {
-    ini_opt = (ini_opt_list*) malloc (sizeof(ini_opt_list));
-
-    ini_opt_init (ini_opt);
-
-    int opt, err = 0;
+    int opt;
+    error_t err = E_SUCCESS;
     if ( argc < 2 )
         show_help (NOARGS_MSG);
     else
     {
-        while (( opt = getopt (argc, argv, "is+vVhf:")) != -1 )
+        while (( opt = getopt (argc, argv, "+isvVhf:")) != -1 )
         {
             if ( opt == 'h' )
             {
@@ -88,9 +105,7 @@ error_t read_option (int argc, char *argv[], ini_opt_list* ini_opt)
                     break;
                 }
                 else
-                {
                     ini_opt->input_mode = STDIN;
-                }
             }
 
 
