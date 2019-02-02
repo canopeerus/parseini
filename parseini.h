@@ -1,6 +1,21 @@
 #ifndef PARSEINI_H
 #define PARSEINI_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#define VERSION "v0.1.0"
+#define E_MALLOC_MSG "Error : malloc failed"
+#define E_ARG_MSG "Error : Unsupported option"
+#define E_FILE_MSG "Error : unable to open file!"
+
+typedef enum
+{
+    UNINIT_OP = -1,
+    CHECK,
+    KEY
+} operation_t;
+
 typedef enum
 {
     NOARGS_MSG,
@@ -26,13 +41,14 @@ typedef enum
 typedef struct
 {
     input_t input_mode;
-    const char *filepath;
-} ini_opt_list;
+    operation_t op;
+    char *filepath;
+} optlist_t;
 
-extern error_t read_option (int, char**, ini_opt_list*);
+extern optlist_t* read_option (int, char**, error_t*);
 
-extern void ini_opt_init (ini_opt_list*);
+extern void serror (error_t);
 
-extern void ini_opt_cleanup (ini_opt_list*);
+extern void e_assert (bool, error_t);
 
 #endif

@@ -6,24 +6,35 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <unistd.h>
+#include <stdbool.h>
+#include <string.h>
 
 static const char *noargs_msg = "No options given. Run with '-h' option";
 
 static const char *basic_msg =
-"parseini v0.1.0\n"
-"canopeerus <visvanathannaditya@gmail.com\n"
-"A command-line simple INI configuration processor";
+"parseini "VERSION"\n"
+"canopeerus <visvanathannaditya@gmail.com>\n"
+"A simple command-line INI configuration processor";
 
 static const char *full_msg =
 "\nUSAGE:\n"
 "\tpi [FLAGS] [OPTIONS] <path/to/file>\n"
 "\nFLAGS:\n"
-"\t-h   prints help information\n"
-"\t-v   prints version information\n"
-"\t-V   checks validity of input INI\n"
-"\t-s   read INI input from stdin (conflicts with '-f <file' option)\n"
+"\t-h, --help           prints help information\n"
+"\t-v, --version        prints version information\n"
+"\t-c, --check          checks validity of input INI\n"
 "\nOPTIONS:\n"
-"\t-f <FILE>    path to file to read from";
+"\t-f, --file <FILE>    path to file to read from\n"
+"\nNote : If no FILE is passed,standard input is read";
+
+static struct option long_options[] =
+{
+    {"file", required_argument, 0, 'f'},
+    {"help", no_argument, 0, 'h'},
+    {"version", no_argument, 0, 'v'},
+    {"check", no_argument, 0, 'c'},
+    {0, 0, 0, 0}
+};
 
 static void show_help (msg_t m)
 {
@@ -36,34 +47,57 @@ static void show_help (msg_t m)
             (void) fprintf (stdout, "%s\n", basic_msg);
             break;
         case FULL_MSG:
-            (void) fprintf (stdout,"%s\n", basic_msg);
+            (void) fprintf (stdout, "%s\n", basic_msg);
             (void) fprintf (stdout, "%s\n", full_msg);
             break;
     }
-    return;
 }
 
-void ini_opt_init (ini_opt_list* i_opt)
+void serror (error_t e)
 {
-    i_opt = (ini_opt_list*) malloc (sizeof(ini_opt_list));
+    switch (e)
+    {
+        case E_MALLOC:
+            (void) fprintf (stderr, "%s\n", E_MALLOC_MSG);
+            break;
+        case E_ARG:
+            (void) fprintf (stderr, "%s\n", E_ARG_MSG);
+            break;
+        case E_FILE:
+            (void) fprintf (stderr, "%s\n", E_FILE_MSG);
+            break;
+        case E_SUCCESS:
+            // do nothing
+            break;
+    }
+}
+
+void e_assert (bool expr,error_t err)
+{
+    if ( ! expr )
+    {
+        serror (err);
+        exit((int)err);
+    }
+}
+
+optlist_t* read_option (int argc, char *argv[], error_t *err)
+{
+    optlist_t* i_opt = NULL;
+    int opt, opt_index;
+    i_opt = (optlist_t*) malloc (sizeof(optlist_t));
+    e_assert (i_opt, E_MALLOC);
+
     i_opt->input_mode = UNINIT;
     i_opt->filepath = NULL;
-}
+    *err = E_SUCCESS;
 
-void ini_opt_cleanup (ini_opt_list* i_opt)
-{
-    free (i_opt);
-}
-
-error_t read_option (int argc, char *argv[], ini_opt_list* ini_opt)
-{
-    int opt;
-    error_t err = E_SUCCESS;
     if ( argc < 2 )
         show_help (NOARGS_MSG);
     else
     {
-        while (( opt = getopt (argc, argv, "+isvVhf:")) != -1 )
+        while (( opt = getopt_long (argc, argv, "+vchf:", long_options,
+                        &opt_index)) != -1 )
         {
             if ( opt == 'h' )
             {
@@ -75,50 +109,29 @@ error_t read_option (int argc, char *argv[], ini_opt_list* ini_opt)
                 show_help (BASIC_MSG);
                 break;
             }
-
-            else if ( opt == 'V' )
+            else if ( opt == 'c' )
                 (void) fprintf (stdout, "Validate option chosen\n");
-
             else if ( opt == 'f' )
             {
-                if ( ini_opt->input_mode == STDIN )
-                {
-                    (void) fprintf (stderr, "Conflicting arguments"
-                            " 'file' and 'stdin'\n");
-                    err = E_ARG;
-                    break;
-                }
-                else
-                {
-                    ini_opt->filepath = (const char*) optarg;
-                    ini_opt->input_mode = FIL;
-                }
+                i_opt->input_mode = FIL;
+                i_opt->filepath = (char*) malloc (
+                        (strlen (optarg)+1)*sizeof(char));
+                e_assert (i_opt->filepath, E_MALLOC);
+                (void) strcpy (i_opt->filepath, optarg);
+
             }
-
-            else if ( opt == 's' )
-            {
-                if ( ini_opt->input_mode == FIL || ini_opt->filepath )
-                {
-                    (void) fprintf (stderr, "Conflicting arguments"
-                            " 'file' and 'stdin'\n");
-                    err = E_ARG;
-                    break;
-                }
-                else
-                    ini_opt->input_mode = STDIN;
-            }
-
-
             else if ( opt == '?' )
             {
-                err = 1;
+                *err = E_ARG;
                 break;
             }
             else
-                err = 1;
+                *err = E_ARG;
         }
+        if ( i_opt->input_mode == UNINIT )
+            i_opt->input_mode = STDIN;
         if ( optind < argc )
-            err = 1;
+            *err = E_ARG;
     }
-    return err;
+    return i_opt;
 }
