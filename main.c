@@ -13,5 +13,9 @@ int main (int argc, char *argv[])
         serror (E_ARG);
         exit ((int) E_ARG);
     }
+    else
+    {
+        parseini (ini_opt);
+    }
     return 0;
 }
