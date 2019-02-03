@@ -86,14 +86,17 @@ static size_t nstrlen (char *buf)
 }
 
 
-static void nstrcpy (char *dest, char *src)
+static size_t nstrcpy (char *dest, char *src)
 {
     char *i = src,*j = dest;
+    size_t bytes_copied = 0;
     while ( *i != '\n' )
     {
         *(j++) = *(i++);
+        bytes_copied++;
     }
     *j = '\0';
+    return bytes_copied;
 }
 
 static char* get_key_value (char *buf, char *key, int* found)
@@ -103,7 +106,7 @@ static char* get_key_value (char *buf, char *key, int* found)
     size_t len = strlen (key),val_len;
 
     *found = 0;
-    while ( *(i++) != '\0' )
+    while ( *i != '\0' )
     {
         if ( strncmp (i, key, len) == 0 )
         {
@@ -112,9 +115,10 @@ static char* get_key_value (char *buf, char *key, int* found)
             val_len = nstrlen (j);
             val = (char*) malloc ( (val_len+1) * sizeof(char));
             e_assert (val, E_MALLOC);
-            nstrcpy (val, j);
+            (void) nstrcpy (val, j);
             break;
         }
+        i++;
     }
     return val;
 }
