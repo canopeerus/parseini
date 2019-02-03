@@ -11,9 +11,9 @@
 
 typedef enum
 {
-    UNINIT_OP = -1,
-    CHECK,
-    KEY
+    UNINIT_OP = 0,
+    CHECK = 0x01,
+    KEY = 0x02
 } operation_t;
 
 typedef enum
@@ -41,8 +41,9 @@ typedef enum
 typedef struct
 {
     input_t input_mode;
-    operation_t op;
+    int op;
     char *filepath;
+    char *key;
 } optlist_t;
 
 extern optlist_t* read_option (int, char**, error_t*);
@@ -51,4 +52,5 @@ extern void serror (error_t);
 
 extern void e_assert (bool, error_t);
 
+extern void parseini (optlist_t*);
 #endif
