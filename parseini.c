@@ -20,12 +20,13 @@ static const char *full_msg =
 "\nUSAGE:\n"
 "\tpi [FLAGS] [OPTIONS]\n"
 "\nFLAGS:\n"
-"\t-h, --help           prints help information\n"
-"\t-v, --version        prints version information\n"
-"\t-c, --check          checks validity of input INI\n"
+"\t-h, --help               prints help information\n"
+"\t-v, --version            prints version information\n"
+"\t-c, --check              checks validity of input INI\n"
 "\nOPTIONS:\n"
-"\t-f, --file <FILE>    path to file to read from\n"
-"\t-k, --key <KEY>      prints value of the matching key-value pair\n"
+"\t-f, --file <FILE>        path to file to read from\n"
+"\t-k, --key <KEY>          prints value of the matching key-value pair\n"
+"\t-s, --section <SECTION>  limits searching to the given section title\n"
 "\nNote : If no FILE is passed,standard input is read";
 
 static struct option long_options[] =
@@ -35,6 +36,7 @@ static struct option long_options[] =
     {"version", no_argument, 0, 'v'},
     {"check", no_argument, 0, 'c'},
     {"key", required_argument, 0, 'k'},
+    {"section", required_argument, 0, 's'},
     {0, 0, 0, 0}
 };
 
@@ -186,6 +188,7 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
     i_opt->input_mode = UNINIT;
     i_opt->filepath = NULL;
     i_opt->key = NULL;
+    i_opt->section = NULL;
     i_opt->op = UNINIT_OP;
     *err = E_SUCCESS;
 
@@ -193,7 +196,7 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
         show_help (NOARGS_MSG);
     else
     {
-        while (( opt = getopt_long (argc, argv, "+vchf:k:", long_options,
+        while (( opt = getopt_long (argc, argv, "+vchf:k:s", long_options,
                         &opt_index)) != -1 )
         {
             if ( opt == 'h' )
@@ -226,6 +229,14 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
                 e_assert (i_opt->key, E_MALLOC);
                 (void) strcpy (i_opt->key, optarg);
                 (void) strcat (i_opt->key,equal_term);
+            }
+            else if ( opt == 's' )
+            {
+                i_opt->op |= SECTION;
+                i_opt->section = (char*) malloc (
+                        (strlen(optarg)+1) * sizeof(char));
+                e_assert (i_opt->section, E_MALLOC);
+                (void) strcpy (i_opt->section, optarg);
             }
             else if ( opt == '?' )
             {

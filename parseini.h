@@ -13,7 +13,8 @@ typedef enum
 {
     UNINIT_OP = 0,
     CHECK = 0x01,
-    KEY = 0x02
+    KEY = 0x02,
+    SECTION = 0x04
 } operation_t;
 
 typedef enum
@@ -44,6 +45,7 @@ typedef struct
     int op;
     char *filepath;
     char *key;
+    char *section;
 } optlist_t;
 
 extern optlist_t* read_option (int, char**, error_t*);
