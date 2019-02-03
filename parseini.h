@@ -6,7 +6,7 @@
 
 #define VERSION "v0.1.0"
 #define E_MALLOC_MSG "Error : malloc failed"
-#define E_ARG_MSG "Error : Unsupported option"
+#define E_ARG_MSG "Error : Argument error"
 #define E_FILE_MSG "Error : unable to open file!"
 
 typedef enum

@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-static const char *noargs_msg = "No options given. Run with '-h' option";
+static const char *noargs_msg = "No options given. Run 'pi -h' for help";
 static const char equal_term[2] = {'=','\0'};
 static const char *basic_msg =
 "parseini "VERSION"\n"
@@ -26,7 +26,7 @@ static const char *full_msg =
 "\nOPTIONS:\n"
 "\t-f, --file <FILE>        path to file to read from\n"
 "\t-k, --key <KEY>          prints value of the matching key-value pair\n"
-"\t-s, --section <SECTION>  limits searching to the given section title\n"
+"\t-s, --section <SECTION>  limits filters to the matching section\n"
 "\nNote : If no FILE is passed,standard input is read";
 
 static struct option long_options[] =
@@ -196,7 +196,7 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
         show_help (NOARGS_MSG);
     else
     {
-        while (( opt = getopt_long (argc, argv, "+vchf:k:s", long_options,
+        while (( opt = getopt_long (argc, argv, "+vchf:k:s:", long_options,
                         &opt_index)) != -1 )
         {
             if ( opt == 'h' )
