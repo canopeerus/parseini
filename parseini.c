@@ -18,15 +18,16 @@ static const char *basic_msg =
 
 static const char *full_msg =
 "\nUSAGE:\n"
-"\tpi [FLAGS] [OPTIONS]\n"
+"  pi [FLAGS] [OPTIONS]\n"
 "\nFLAGS:\n"
-"\t-h, --help               prints help information\n"
-"\t-v, --version            prints version information\n"
-"\t-c, --check              checks validity of input INI\n"
-"\nOPTIONS:\n"
-"\t-f, --file <FILE>        path to file to read from\n"
-"\t-k, --key <KEY>          prints value of the matching key-value pair\n"
-"\t-s, --section <SECTION>  limits filters to the matching section\n"
+"  -h, --help                   prints help information\n"
+"  -v, --version                prints version information\n"
+"  -V, --validate               checks validity of input INI\n"
+"OPTIONS:\n"
+"  -f, --file <FILE>            path to file to read from\n"
+"  -k, --key <KEY>              prints value of the matching key-value"
+"pair\n"
+"  -s, --section-only <SECTION>  limits filters to the matching section\n"
 "\nNote : If no FILE is passed,standard input is read";
 
 static struct option long_options[] =
@@ -34,9 +35,9 @@ static struct option long_options[] =
     {"file", required_argument, 0, 'f'},
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'v'},
-    {"check", no_argument, 0, 'c'},
+    {"validate", no_argument, 0, 'V'},
     {"key", required_argument, 0, 'k'},
-    {"section", required_argument, 0, 's'},
+    {"section-only", required_argument, 0, 's'},
     {0, 0, 0, 0}
 };
 
@@ -149,7 +150,7 @@ static void read_file_chunk (FILE* f, optlist_t* i_opt)
             }
         }
         if ( ! key_found )
-            fprintf (stdout, "matching key-pair not found\n");
+            fprintf (stdout, "%s\n", KEY_MISMATCH);
     }
     free (buf);
 }
@@ -182,6 +183,25 @@ void e_assert (bool expr,error_t err)
     }
 }
 
+void parseini (optlist_t* i_opt)
+{
+    FILE* f = NULL;
+    if ( i_opt->op )
+    {
+        if ( i_opt->input_mode == FIL )
+        {
+            f = fopen (i_opt->filepath, "r");
+            e_assert (f, E_FILE);
+            read_file_chunk (f, i_opt);
+            fclose (f);
+        }
+        else if ( i_opt->input_mode == STDIN )
+        {
+            read_file_chunk (stdin, i_opt);
+        }
+    }
+}
+
 optlist_t* read_option (int argc, char *argv[], error_t *err)
 {
     optlist_t* i_opt = NULL;
@@ -200,8 +220,8 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
         show_help (NOARGS_MSG);
     else
     {
-        while (( opt = getopt_long (argc, argv, "+vchf:k:s:", long_options,
-                        &opt_index)) != -1 )
+        while (( opt = getopt_long (argc, argv, "+vchf:k:s:",
+                        long_options, &opt_index)) != -1 )
         {
             if ( opt == 'h' )
             {
@@ -258,21 +278,4 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
     return i_opt;
 }
 
-void parseini (optlist_t* i_opt)
-{
-    FILE* f = NULL;
-    if ( i_opt->op )
-    {
-        if ( i_opt->input_mode == FIL )
-        {
-            f = fopen (i_opt->filepath, "r");
-            e_assert (f, E_FILE);
-            read_file_chunk (f, i_opt);
-            fclose (f);
-        }
-        else if ( i_opt->input_mode == STDIN )
-        {
-            read_file_chunk (stdin, i_opt);
-        }
-    }
-}
+
