@@ -10,7 +10,7 @@
 #include <string.h>
 
 static const char *noargs_msg = "No options given. Run with '-h' option";
-
+static const char equal_term[2] = {'=','\0'};
 static const char *basic_msg =
 "parseini "VERSION"\n"
 "canopeerus <visvanathannaditya@gmail.com>\n"
@@ -25,6 +25,7 @@ static const char *full_msg =
 "\t-c, --check          checks validity of input INI\n"
 "\nOPTIONS:\n"
 "\t-f, --file <FILE>    path to file to read from\n"
+"\t-k, --key <KEY>      prints value of the matching key-value pair\n"
 "\nNote : If no FILE is passed,standard input is read";
 
 static struct option long_options[] =
@@ -54,37 +55,97 @@ static void show_help (msg_t m)
     }
 }
 
+static void strip_spaces (char* buf)
+{
+    char *i = buf,*j = buf;
+    while ( *j != '\0' )
+    {
+        *i = *j++;
+        if ( *i != ' ' )
+            i++;
+    }
+    *i = '\0';
+}
+
+
 static int validate_ini (char* buf)
 {
-    size_t siz = strlen (buf);
-    int i,ini_err = 0;
-
-    return ini_err;
+    // do nothing
+    return 0;
 }
+
+static size_t nstrlen (char *buf)
+{
+    char *i = buf;
+    size_t siz = 0;
+    while ( *(i++) != '\n' )
+        siz++;
+    return siz;
+}
+
+
+static void nstrcpy (char *dest, char *src)
+{
+    char *i = src,*j = dest;
+    while ( *i != '\n' )
+    {
+        *(j++) = *(i++);
+    }
+    *j = '\0';
+}
+
+static char* get_key_value (char *buf, char *key, int* found)
+{
+    char *val = NULL;
+    char *i = buf,*j;
+    size_t len = strlen (key),val_len;
+
+    *found = 0;
+    while ( *(i++) != '\0' )
+    {
+        if ( strncmp (i, key, len) == 0 )
+        {
+            *found = 1;
+            j = i + len;
+            val_len = nstrlen (j);
+            val = (char*) malloc ( (val_len+1) * sizeof(char));
+            e_assert (val, E_MALLOC);
+            nstrcpy (val, j);
+            break;
+        }
+    }
+    return val;
+}
+
 
 static void read_file_chunk (FILE* f, optlist_t* i_opt)
 {
-    int v_err;
+    int v_err,key_found;
     char *buf = NULL;
-
+    char *val = NULL;
     buf = (char*) malloc (BUFSIZ * sizeof(char));
     e_assert (buf, E_MALLOC);
 
-    while ( fread (buf, sizeof(char), BUFSIZ,f) )
+    if ( i_opt->op & CHECK )
     {
-        if ( i_opt->op & CHECK )
+    }
+    else if ( i_opt->op & KEY )
+    {
+        while ( fread (buf, sizeof(char), BUFSIZ, f) )
         {
-            if ( (v_err = validate_ini (buf) ) )
+            strip_spaces (buf);
+            val = get_key_value (buf, i_opt->key, &key_found);
+            if ( key_found )
             {
-                (void) fprintf (stderr, "Error at line %d\n", v_err);
+                (void) fprintf (stdout, "Found %s%s\n", i_opt->key, val);
+                free (val);
                 break;
             }
         }
-        else if ( i_opt->op & KEY )
-        {
-            (void) fprintf (stdout, "%s", buf);
-        }
+        if ( ! key_found )
+            fprintf (stdout, "matching key-pair not found\n");
     }
+    free (buf);
 }
 
 void serror (error_t e)
@@ -156,15 +217,15 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
                         (strlen (optarg)+1)*sizeof(char));
                 e_assert (i_opt->filepath, E_MALLOC);
                 (void) strcpy (i_opt->filepath, optarg);
-
             }
             else if ( opt == 'k' )
             {
                 i_opt->op |= KEY;
                 i_opt->key = (char*) malloc (
-                        (strlen(optarg)+1) * sizeof(char));
+                        (strlen(optarg)+2) * sizeof(char));
                 e_assert (i_opt->key, E_MALLOC);
-                strcpy (i_opt->key, optarg);
+                (void) strcpy (i_opt->key, optarg);
+                (void) strcat (i_opt->key,equal_term);
             }
             else if ( opt == '?' )
             {
@@ -192,6 +253,7 @@ void parseini (optlist_t* i_opt)
             f = fopen (i_opt->filepath, "r");
             e_assert (f, E_FILE);
             read_file_chunk (f, i_opt);
+            fclose (f);
         }
         else if ( i_opt->input_mode == STDIN )
         {
