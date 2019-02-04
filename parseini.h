@@ -5,14 +5,16 @@
 #include <stdint.h>
 
 #define VERSION "v0.1.0"
-#define E_MALLOC_MSG "Error : malloc failed"
-#define E_ARG_MSG "Error : Argument error"
-#define E_FILE_MSG "Error : unable to open file!"
+#define E_MALLOC_MSG "Error: malloc failed"
+#define E_ARG_MSG "Error: Argument error"
+#define E_FILE_MSG "Error: unable to open file!"
+#define KEY_MISMATCH "pi: No matching key-value pair found"
+#define COMMENT_DELIM ';'
 
 typedef enum
 {
     UNINIT_OP = 0,
-    CHECK = 0x01,
+    VALIDATE = 0x01,
     KEY = 0x02,
     SECTION = 0x04
 } operation_t;

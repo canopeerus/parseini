@@ -27,7 +27,7 @@ static const char *full_msg =
 "  -f, --file <FILE>            path to file to read from\n"
 "  -k, --key <KEY>              prints value of the matching key-value"
 "pair\n"
-"  -s, --section-only <SECTION>  limits filters to the matching section\n"
+"  -s, --section-only <SECTION> limits filters to the matching section\n"
 "\nNote : If no FILE is passed,standard input is read";
 
 static struct option long_options[] =
@@ -81,8 +81,11 @@ static size_t nstrlen (char *buf)
 {
     char *i = buf;
     size_t siz = 0;
-    while ( *(i++) != '\n' )
+    while ( *i != '\n' && *i != COMMENT_DELIM)
+    {
         siz++;
+        i++;
+    }
     return siz;
 }
 
@@ -91,7 +94,7 @@ static size_t nstrcpy (char *dest, char *src)
 {
     char *i = src,*j = dest;
     size_t bytes_copied = 0;
-    while ( *i != '\n' )
+    while ( *i != '\n' && *i != COMMENT_DELIM )
     {
         *(j++) = *(i++);
         bytes_copied++;
@@ -100,15 +103,31 @@ static size_t nstrcpy (char *dest, char *src)
     return bytes_copied;
 }
 
+static char* jump_to_newline (char *ptr)
+{
+    char *i = ptr;
+    while ( (*i != '\0') && (*i != COMMENT_DELIM) )
+    {
+        if ( *i == '\n' )
+            break;
+        i++;
+    }
+    i++;
+    return i;
+}
+
+
 static char* get_key_value (char *buf, char *key, int* found)
 {
     char *val = NULL;
     char *i = buf,*j;
-    size_t len = strlen (key),val_len;
+    size_t len = strlen (key), val_len;
 
     *found = 0;
     while ( *i != '\0' )
     {
+        if ( *i == COMMENT_DELIM )
+            i = jump_to_newline (i+1);
         if ( strncmp (i, key, len) == 0 )
         {
             *found = 1;
@@ -133,7 +152,7 @@ static void read_file_chunk (FILE* f, optlist_t* i_opt)
     buf = (char*) malloc (BUFSIZ * sizeof(char));
     e_assert (buf, E_MALLOC);
 
-    if ( i_opt->op & CHECK )
+    if ( i_opt->op & VALIDATE )
     {
     }
     else if ( i_opt->op & KEY )
@@ -233,9 +252,9 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
                 show_help (BASIC_MSG);
                 break;
             }
-            else if ( opt == 'c' )
+            else if ( opt == 'V' )
             {
-                i_opt->op |= CHECK;
+                i_opt->op |= VALIDATE;
             }
             else if ( opt == 'f' )
             {
