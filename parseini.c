@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
 static const char *noargs_msg = "No options given. Run 'pi -h' for help";
 static const char equal_term[2] = {'=','\0'};
@@ -24,8 +25,8 @@ static const char *full_msg =
 "  -v, --version                prints version information\n"
 "  -V, --validate               checks validity of input INI\n"
 "OPTIONS:\n"
-"  -f, --file <FILE>            path to file to read from\n"
-"  -k, --key <KEY>              prints value of the matching key-value"
+"  -F, --file <FILE>            path to file to read from\n"
+"  -m, --match-identifier <KEY> prints value of the matching key-value"
 "pair\n"
 "  -s, --section-only <SECTION> limits filters to the matching section\n"
 "\nNote : If no FILE is passed,standard input is read";
@@ -36,7 +37,7 @@ static struct option long_options[] =
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'v'},
     {"validate", no_argument, 0, 'V'},
-    {"find-key", required_argument, 0, 'f'},
+    {"match-identifier", required_argument, 0, 'm'},
     {"section-only", required_argument, 0, 's'},
     {0, 0, 0, 0}
 };
@@ -121,7 +122,7 @@ static char* get_key_value (char *buf, char *key, int* found)
 {
     char *val = NULL;
     char *i = buf,*j;
-    size_t len = strlen (key), val_len;
+    size_t len = strlen (key), val_len, ret;
 
     *found = 0;
     while ( *i != '\0' )
@@ -135,7 +136,8 @@ static char* get_key_value (char *buf, char *key, int* found)
             val_len = nstrlen (j);
             val = (char*) malloc ( (val_len+1) * sizeof(char));
             e_assert (val, E_MALLOC);
-            (void) nstrcpy (val, j);
+            ret = nstrcpy (val, j);
+            assert (ret > 0);
             break;
         }
         i++;
@@ -163,7 +165,7 @@ static void read_file_chunk (FILE* f, optlist_t* i_opt)
             val = get_key_value (buf, i_opt->key, &key_found);
             if ( key_found )
             {
-                (void) fprintf (stdout, "Found %s%s\n", i_opt->key, val);
+                (void) fprintf (stdout, "%s\n", val);
                 free (val);
                 break;
             }
@@ -239,7 +241,7 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
         show_help (NOARGS_MSG);
     else
     {
-        while (( opt = getopt_long (argc, argv, "+vchf:k:s:",
+        while (( opt = getopt_long (argc, argv, "+vVhF:m:s:",
                         long_options, &opt_index)) != -1 )
         {
             if ( opt == 'h' )
@@ -264,14 +266,15 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
                 e_assert (i_opt->filepath, E_MALLOC);
                 (void) strcpy (i_opt->filepath, optarg);
             }
-            else if ( opt == 'f' )
+            else if ( opt == 'm' )
             {
                 i_opt->op |= KEY;
                 i_opt->key = (char*) malloc (
                         (strlen(optarg)+2) * sizeof(char));
                 e_assert (i_opt->key, E_MALLOC);
-                (void) strcpy (i_opt->key, optarg);
+                strcpy (i_opt->key, optarg);
                 (void) strcat (i_opt->key,equal_term);
+
             }
             else if ( opt == 's' )
             {
@@ -279,7 +282,7 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
                 i_opt->section = (char*) malloc (
                         (strlen(optarg)+1) * sizeof(char));
                 e_assert (i_opt->section, E_MALLOC);
-                (void) strcpy (i_opt->section, optarg);
+                strcpy (i_opt->section, optarg);
             }
             else if ( opt == '?' )
             {
@@ -296,5 +299,3 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
     }
     return i_opt;
 }
-
-
