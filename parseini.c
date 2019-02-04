@@ -32,11 +32,11 @@ static const char *full_msg =
 
 static struct option long_options[] =
 {
-    {"file", required_argument, 0, 'f'},
+    {"file", required_argument, 0, 'F'},
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'v'},
     {"validate", no_argument, 0, 'V'},
-    {"key", required_argument, 0, 'k'},
+    {"find-key", required_argument, 0, 'f'},
     {"section-only", required_argument, 0, 's'},
     {0, 0, 0, 0}
 };
@@ -256,7 +256,7 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
             {
                 i_opt->op |= VALIDATE;
             }
-            else if ( opt == 'f' )
+            else if ( opt == 'F' )
             {
                 i_opt->input_mode = FIL;
                 i_opt->filepath = (char*) malloc (
@@ -264,7 +264,7 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
                 e_assert (i_opt->filepath, E_MALLOC);
                 (void) strcpy (i_opt->filepath, optarg);
             }
-            else if ( opt == 'k' )
+            else if ( opt == 'f' )
             {
                 i_opt->op |= KEY;
                 i_opt->key = (char*) malloc (
