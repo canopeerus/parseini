@@ -8,11 +8,12 @@
 #define E_MALLOC_MSG "Error: malloc failed"
 #define E_ARG_MSG "Error: Argument error"
 #define E_FILE_MSG "Error: unable to open file!"
-#define KEY_MISMATCH "pi: No matching key-value pair found"
+#define KEY_MISMATCH "pi: No matching key-value pair found for section:"
 #define COMMENT_DELIM ';'
 
 typedef enum
 {
+    HELP_OP = -1,
     UNINIT_OP = 0,
     VALIDATE = 0x01,
     KEY = 0x02,
@@ -38,7 +39,7 @@ typedef enum
     E_ARG = -1,
     E_SUCCESS,
     E_MALLOC,
-    E_FILE
+    E_FILE,
 } error_t;
 
 typedef struct

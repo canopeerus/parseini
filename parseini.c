@@ -24,10 +24,10 @@ static const char *full_msg =
 "  -h, --help                   prints help information\n"
 "  -v, --version                prints version information\n"
 "  -V, --validate               checks validity of input INI\n"
-"OPTIONS:\n"
+"\nOPTIONS:\n"
 "  -F, --file <FILE>            path to file to read from\n"
-"  -m, --match-identifier <KEY> prints value of the matching key-value"
-"pair\n"
+"  -m, --match-option <KEY>     prints value of the matching key-value"
+" pair\n"
 "  -s, --section-only <SECTION> limits filters to the matching section\n"
 "\nNote : If no FILE is passed,standard input is read";
 
@@ -37,7 +37,7 @@ static struct option long_options[] =
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'v'},
     {"validate", no_argument, 0, 'V'},
-    {"match-identifier", required_argument, 0, 'm'},
+    {"match-option", required_argument, 0, 'm'},
     {"section-only", required_argument, 0, 's'},
     {0, 0, 0, 0}
 };
@@ -113,8 +113,7 @@ static char* jump_to_newline (char *ptr)
             break;
         i++;
     }
-    i++;
-    return i;
+    return ++i;
 }
 
 
@@ -142,6 +141,7 @@ static char* get_key_value (char *buf, char *key, int* found)
         }
         i++;
     }
+    *(key + len - 1) = 0;
     return val;
 }
 
@@ -156,6 +156,7 @@ static void read_file_chunk (FILE* f, optlist_t* i_opt)
 
     if ( i_opt->op & VALIDATE )
     {
+        // while ( fread (buf, sizeof(char), BUFSIZ, f) );
     }
     else if ( i_opt->op & KEY )
     {
@@ -171,7 +172,7 @@ static void read_file_chunk (FILE* f, optlist_t* i_opt)
             }
         }
         if ( ! key_found )
-            fprintf (stdout, "%s\n", KEY_MISMATCH);
+            fprintf (stdout, "%s %s\n", KEY_MISMATCH, i_opt->key);
     }
     free (buf);
 }
@@ -226,7 +227,7 @@ void parseini (optlist_t* i_opt)
 optlist_t* read_option (int argc, char *argv[], error_t *err)
 {
     optlist_t* i_opt = NULL;
-    int opt, opt_index;
+    int opt;
     i_opt = (optlist_t*) malloc (sizeof(optlist_t));
     e_assert (i_opt, E_MALLOC);
 
@@ -235,23 +236,24 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
     i_opt->key = NULL;
     i_opt->section = NULL;
     i_opt->op = UNINIT_OP;
-    *err = E_SUCCESS;
 
     if ( argc < 2 )
         show_help (NOARGS_MSG);
     else
     {
-        while (( opt = getopt_long (argc, argv, "+vVhF:m:s:",
-                        long_options, &opt_index)) != -1 )
+        while (( opt = getopt_long (argc, argv, "vVhF:m:s:",
+                        long_options, NULL)) != -1 )
         {
             if ( opt == 'h' )
             {
                 show_help (FULL_MSG);
+                i_opt->op = HELP_OP;
                 break;
             }
             else if ( opt == 'v' )
             {
                 show_help (BASIC_MSG);
+                i_opt->op = HELP_OP;
                 break;
             }
             else if ( opt == 'V' )
@@ -290,12 +292,20 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
                 break;
             }
             else
+            {
+                printf ("%c\n", opt);
                 *err = E_ARG;
+                break;
+            }
         }
-        if ( i_opt->input_mode == UNINIT )
+        if ( i_opt->input_mode == UNINIT && i_opt->op != HELP_OP )
             i_opt->input_mode = STDIN;
         if ( optind < argc )
             *err = E_ARG;
+        if ( i_opt->op == UNINIT_OP && *err != E_ARG )
+        {
+            (void) fprintf (stderr, "pi: No operations specified\n");
+        }
     }
     return i_opt;
 }

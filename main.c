@@ -4,9 +4,8 @@
 
 int main (int argc, char *argv[])
 {
-    error_t err;
+    error_t err = E_SUCCESS;
     optlist_t *ini_opt = NULL;
-
     ini_opt = read_option (argc, argv, &err);
     if ( err == E_ARG )
     {
@@ -16,6 +15,7 @@ int main (int argc, char *argv[])
     else
     {
         parseini (ini_opt);
+        free (ini_opt);
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
