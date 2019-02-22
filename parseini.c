@@ -10,6 +10,8 @@
 #include <string.h>
 #include <assert.h>
 
+#define _XOPEN_SOURCE 500
+
 static const char *noargs_msg = "No options given. Run 'pi -h' for help";
 static const char equal_term[2] = {'=','\0'};
 static const char *basic_msg =
@@ -57,6 +59,54 @@ static void show_help (msg_t m)
             (void) fprintf (stdout, "%s\n", full_msg);
             break;
     }
+}
+
+static hashtable_t *ht_create (size_t siz)
+{
+    hashtable_t *hashtable = NULL;
+    int i;
+    e_assert ( siz >= 1, E_HT);
+
+    hashtable = malloc ( sizeof (hashtable_t));
+    e_assert (hashtable, E_MALLOC);
+
+    hashtable->table = malloc ( sizeof (entry_t*) * siz );
+    e_assert (hashtable->table, E_MALLOC);
+    for (i = 0; i < siz; i++)
+        hashtable->table[i] = NULL;
+    
+    hashtable->size = siz;
+    return hashtable;
+} 
+
+static int ht_hash (hashtable_t *ht, char* key)
+{
+    unsigned long int hval;
+    int i = 0;
+
+    while ( hval < ULONG_MAX && i < strlen (key) )
+    {
+        hval = hval << 8;
+        hval += key[i];
+        i++;
+    }
+    return hval % ht->size;
+}
+
+static entry_t *ht_newpair (char *key, char *value)
+{
+    entry_t *newpair;
+    newpair = malloc ( sizeof (entry_t));
+    e_assert (newpair, E_MALLOC);
+
+    newpair->key = strdup (key);
+    if ( ! newpair->key )
+        return NULL;
+    newpair->value = strdup (value);
+    if ( ! newpair->value )
+        return NULL;
+    newpair->next = NULL;
+    return newpair;
 }
 
 static void strip_spaces (char* buf)
@@ -190,6 +240,9 @@ void serror (error_t e)
         case E_FILE:
             (void) fprintf (stderr, "%s\n", E_FILE_MSG);
             break;
+        case E_HT:
+            (void) fprintf (stderr, "%s\n", E_HT_MSG);
+            break;
         case E_SUCCESS:
             // do nothing
             break;
@@ -271,8 +324,9 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
             else if ( opt == 'm' )
             {
                 i_opt->op |= KEY;
+                i_opt->key_len = strlen (optarg);
                 i_opt->key = (char*) malloc (
-                        (strlen(optarg)+2) * sizeof(char));
+                        (i_opt->key_len + 2) * sizeof(char));
                 e_assert (i_opt->key, E_MALLOC);
                 strcpy (i_opt->key, optarg);
                 (void) strcat (i_opt->key,equal_term);
@@ -281,8 +335,9 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
             else if ( opt == 's' )
             {
                 i_opt->op |= SECTION;
+                i_opt->section_len= strlen (optarg);
                 i_opt->section = (char*) malloc (
-                        (strlen(optarg)+1) * sizeof(char));
+                        (i_opt->section_len + 3) * sizeof(char));
                 e_assert (i_opt->section, E_MALLOC);
                 strcpy (i_opt->section, optarg);
             }
