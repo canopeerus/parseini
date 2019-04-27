@@ -61,54 +61,6 @@ static void show_help (msg_t m)
     }
 }
 
-static hashtable_t *ht_create (size_t siz)
-{
-    hashtable_t *hashtable = NULL;
-    int i;
-    e_assert ( siz >= 1, E_HT);
-
-    hashtable = malloc ( sizeof (hashtable_t));
-    e_assert (hashtable, E_MALLOC);
-
-    hashtable->table = malloc ( sizeof (entry_t*) * siz );
-    e_assert (hashtable->table, E_MALLOC);
-    for (i = 0; i < siz; i++)
-        hashtable->table[i] = NULL;
-    
-    hashtable->size = siz;
-    return hashtable;
-} 
-
-static int ht_hash (hashtable_t *ht, char* key)
-{
-    unsigned long int hval;
-    int i = 0;
-
-    while ( hval < ULONG_MAX && i < strlen (key) )
-    {
-        hval = hval << 8;
-        hval += key[i];
-        i++;
-    }
-    return hval % ht->size;
-}
-
-static entry_t *ht_newpair (char *key, char *value)
-{
-    entry_t *newpair;
-    newpair = malloc ( sizeof (entry_t));
-    e_assert (newpair, E_MALLOC);
-
-    newpair->key = strdup (key);
-    if ( ! newpair->key )
-        return NULL;
-    newpair->value = strdup (value);
-    if ( ! newpair->value )
-        return NULL;
-    newpair->next = NULL;
-    return newpair;
-}
-
 static void strip_spaces (char* buf)
 {
     char *i = buf,*j = buf;

@@ -58,19 +58,6 @@ typedef struct
     size_t section_len;
 } optlist_t;
 
-typedef struct entry
-{
-    char *key;
-    char *value;
-    struct entry *next;
-}entry_t;
-
-typedef struct
-{
-    size_t size;
-    entry_t **table;
-} hashtable_t;
-
 extern optlist_t* read_option (int, char**, error_t*);
 
 extern void serror (error_t);
