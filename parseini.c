@@ -80,6 +80,7 @@ static int validate_ini (char* buf)
     return 0;
 }
 
+// Computes length of string starting at buf until '\n' or COMMENT_DELIM
 static size_t nstrlen (char *buf)
 {
     char *i = buf;
@@ -93,6 +94,7 @@ static size_t nstrlen (char *buf)
 }
 
 
+// Similar to strcpy but copies strings till newline '\n' or COMMENT_DELIM
 static size_t nstrcpy (char *dest, char *src)
 {
     char *i = src,*j = dest;
@@ -106,6 +108,7 @@ static size_t nstrcpy (char *dest, char *src)
     return bytes_copied;
 }
 
+// jump to the next non-comment line
 static char* jump_to_newline (char *ptr)
 {
     char *i = ptr;
@@ -147,6 +150,17 @@ static char* get_key_value (char *buf, char *key, int* found)
     return val;
 }
 
+// constructor of sorts for optlist_t
+static void optlist_t_init (optlist_t* opt)
+{
+    opt->input_mode = UNINIT;
+    opt->filepath = NULL;
+    opt->key = NULL;
+    opt->section = NULL;
+    opt->op = UNINIT_OP;
+
+}
+
 
 static void read_file_chunk (FILE* f, optlist_t* i_opt)
 {
@@ -174,7 +188,7 @@ static void read_file_chunk (FILE* f, optlist_t* i_opt)
             }
         }
         if ( ! key_found )
-            fprintf (stdout, "%s %s\n", KEY_MISMATCH, i_opt->key);
+            (void) fprintf (stdout, "%s %s\n", KEY_MISMATCH, i_opt->key);
     }
     free (buf);
 }
@@ -236,11 +250,7 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
     i_opt = (optlist_t*) malloc (sizeof(optlist_t));
     e_assert (i_opt, E_MALLOC);
 
-    i_opt->input_mode = UNINIT;
-    i_opt->filepath = NULL;
-    i_opt->key = NULL;
-    i_opt->section = NULL;
-    i_opt->op = UNINIT_OP;
+    optlist_t_init (i_opt);
 
     if ( argc < 2 )
         show_help (NOARGS_MSG);
@@ -300,7 +310,7 @@ optlist_t* read_option (int argc, char *argv[], error_t *err)
             }
             else
             {
-                printf ("%c\n", opt);
+                (void) fprintf (stdout, "%c\n", opt);
                 *err = E_ARG;
                 break;
             }
