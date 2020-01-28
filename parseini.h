@@ -14,6 +14,7 @@
 #define E_HT_MSG "Error: hashtable error!"
 #define KEY_MISMATCH "pi: No matching key-value pair found for option:"
 #define COMMENT_DELIM ';'
+#define NEWLINE '\n'
 
 typedef enum
 {

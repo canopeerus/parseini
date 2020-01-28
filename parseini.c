@@ -85,7 +85,7 @@ static size_t nstrlen (char *buf)
 {
     char *i = buf;
     size_t siz = 0;
-    while ( *i != '\n' && *i != COMMENT_DELIM)
+    while ( *i != NEWLINE && *i != COMMENT_DELIM)
     {
         siz++;
         i++;
@@ -99,7 +99,7 @@ static size_t nstrcpy (char *dest, char *src)
 {
     char *i = src,*j = dest;
     size_t bytes_copied = 0;
-    while ( *i != '\n' && *i != COMMENT_DELIM )
+    while ( *i != NEWLINE && *i != COMMENT_DELIM )
     {
         *(j++) = *(i++);
         bytes_copied++;
@@ -114,7 +114,7 @@ static char* jump_to_newline (char *ptr)
     char *i = ptr;
     while ( (*i != '\0') && (*i != COMMENT_DELIM) )
     {
-        if ( *i == '\n' )
+        if ( *i == NEWLINE )
             break;
         i++;
     }
