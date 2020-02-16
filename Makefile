@@ -1,3 +1,5 @@
+# Simple comment
+
 include config.mk
 
 all : ${ALL}
